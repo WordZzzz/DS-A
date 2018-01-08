@@ -3,11 +3,7 @@
 #include <stdexcept>
 #include <stack>
 #include <cstdio>
-#include<iostream>
-#include<cstdio>
-#include<string>
-#include<cstring>
-#include<stack>
+#include <cstring>
 using namespace std; 
 #define M 5
 
@@ -22,9 +18,9 @@ void BubbleSort(T *array, const int length) {
 	if (length <= 0)
 		return;
 
-	for (int i = 0; i < length - 1; ++i){
-		for (int j = 0; j < length - 1 - i; ++j){
-			if (array[j] > array[j + 1]){
+	for (int i = 0; i < length - 1; ++i){				//外循环，每次循环确定一个最大值
+		for (int j = 0; j < length - 1 - i; ++j){		//内循环，用于交换数据，遍历次数递减
+			if (array[j] > array[j + 1]){				//如果当前数据比后面的数据大，则交换
 				T tmp = array[j + 1];
 				array[j + 1] = array[j];
 				array[j] = tmp;
@@ -43,27 +39,54 @@ void BubbleSort1(T *array, const int length) {
 		throw invalid_argument("Array must not be empty"); 
 	if (length <= 0) 
 		return; 
-	bool flag = false; //设置标志位，用来判断内循环是否有数据交换
-
-	for (int i = 0; i < length - 1; ++i){
-		for (int j = 0; j < length - 1 - i; ++j){
-			if (array[j] > array[j + 1]){
+	bool flag = false;									//设置标志位，用来判断内循环是否有数据交换
+	for (int i = 0; i < length - 1; ++i){				//外循环，每次循环确定一个最大值
+		flag = false;									//外循环第一步需要重置标志位
+		for (int j = 0; j < length - 1 - i; ++j){		//内循环，用于交换数据，遍历次数递减
+			if (array[j] > array[j + 1]){				//如果当前数据比后面的数据大，则交换
 				T tmp = array[j + 1];
 				array[j + 1] = array[j];
 				array[j] = tmp;
-				flag = true;
+				flag = true;							//如果有交换，则标志位置1
 			}
 		}
-		if (!flag) return; //如果本次循环没有数据交换，则结束排序
+		if (!flag) return;								//如果本次循环没有数据交换，则结束排序
 	} 
 } 
 
 /*
- *冒泡排序优化2：鸡尾酒排序，一个外循环内跑两个内循环。
- */
+* 冒泡排序优化2：在优化1的基础上，记录上次排序结束位置，减少排序次数。
+*/
 
 template <typename T>
 void BubbleSort2(T *array, const int length) {
+	if (array == NULL)
+		throw invalid_argument("Array must not be empty");
+	if (length <= 0)
+		return;
+	int k = length;
+	int flag = k;										//设置标志位，用来判断内循环是否有数据交换
+	for (int i = 0; i < length - 1; ++i){				//外循环，每次循环确定一个最大值
+		k = flag;
+		flag = 0;										//外循环第一步需要重置标志位
+		for (int j = 0; j < k - 1; ++j){				//内循环，用于交换数据，遍历次数递减
+			if (array[j] > array[j + 1]){				//如果当前数据比后面的数据大，则交换
+				T tmp = array[j + 1];
+				array[j + 1] = array[j];
+				array[j] = tmp;
+				flag = j + 1;							//如果有交换，更新交换位置的记录
+			}
+		}
+		if (!flag) return;								//如果本次循环没有数据交换，则结束排序
+	}
+}
+
+/*
+ *冒泡排序优化3：鸡尾酒排序，一个外循环内跑两个内循环。
+ */
+
+template <typename T>
+void BubbleSort3(T *array, const int length) {
 	if (array == NULL)
 		throw invalid_argument("Array must not be empty");
 	if (length <= 0)
@@ -73,7 +96,7 @@ void BubbleSort2(T *array, const int length) {
 
 	while (high > low)
 	{
-		for (int i = low; i < high; ++i) //正向冒泡，确定最大值  
+		for (int i = low; i < high; ++i)				//正向冒泡，确定最大值  
 		{
 			if (array[i] > array[i + 1])
 			{
@@ -84,7 +107,7 @@ void BubbleSort2(T *array, const int length) {
 		}
 		--high;
 
-		for (int j = high; j > low; --j) //反向冒泡，确定最小值  
+		for (int j = high; j > low; --j)				//反向冒泡，确定最小值  
 		{
 			if (array[j] < array[j - 1])
 			{
@@ -108,10 +131,10 @@ void InsertSort(T *array, const int length) {
 	if (length <= 0)
 		return; 
 
-	for (int i = 1; i < length; ++i){
+	for (int i = 1; i < length; ++i){					//外循环，一次插入一个数据
 		T tmp = array[i]; 
-		int j = i - 1;
-		while (j >= 0 && array[j] > tmp){ 
+		int j = i - 1;									//内循环，从i-1开始
+		while (j >= 0 && array[j] > tmp){				
 			array[j+1] = array[j]; 
 			--j; 
 		} 
@@ -130,10 +153,10 @@ void InsertSort(T *array, const int left, const int right) {
 	if (right - left <= 0)
 		return;
 
-	for (int i = left + 1; i < right; ++i){
+	for (int i = left + 1; i < right; ++i){				//外循环，一次插入一个数据
 		T tmp = array[i];
 		int j = i - 1;
-		while (j >= 0 && array[j] > tmp){
+		while (j >= 0 && array[j] > tmp){				//内循环，从i-1开始
 			array[j + 1] = array[j];
 			--j;
 		}
@@ -151,15 +174,15 @@ void ShellSort(T *array, const int length) {
 		throw invalid_argument("Array must not be empty");
 	if (length <= 0)
 		return;
-	//gap是设置的步长
-	for (int gap = length >> 1; gap > 0; gap >>= 1){
+	
+	for (int gap = length >> 1; gap > 0; gap >>= 1){	//gap是设置的步长
 		T tmp;
 		for (int i = gap; i < length; ++i){
 			tmp = array[i];
-			int j = i;//后面要用到j，所以在for循环的外面初始化
+			int j = i;									//后面要用到j，所以在for循环的外面初始化
 			while (j >= gap && tmp < array[j - gap]){
 				array[j] = array[j - gap];
-				j -= gap
+				j -= gap;
 			}
 			array[j] = tmp;
 		}
@@ -443,12 +466,12 @@ void SelectSort(T *array, const int length) {
 	if (length <= 0)
 		return;
 
-	for (int i = 0; i < length - 1; ++i){
+	for (int i = 0; i < length - 1; ++i){		//外循环，每次选出一个最小的元素放到前面
 		int min = i;
-		for (int j = i + 1; j < length; ++j)
+		for (int j = i + 1; j < length; ++j)	//内循环，确定最小元素的下标
 			if (array[j] < array[min])
 				min = j;
-		if (min != i){
+		if (min != i){							//如果当前数据不是最小元素，就交换
 			T tmp = array[i];
 			array[i] = array[min];
 			array[min] = tmp;
@@ -613,20 +636,21 @@ void MergeSortIteration(T *array, const int length) {
 int main() { 
 	int arr[] = {2,4,6,8,9,7,5,3,1};
 	int len = sizeof(arr) / sizeof(*arr);
-	//double arr[] = {4.5, 2.3,6.7, 3.5, 1.1};
-	//const int len = sizeof(arr) / sizeof(arr[0]);
-	BubbleSort(arr, len);
-	//BubbleSort1(arr, len);
-	//BubbleSort2(arr, len);
-	//InsertSort(arr, len);
-	//ShellSort(arr, len);	
-	//QuickSort(arr, len);
-	//QuickSortIteration(arr, len);
-	//SelectSort(arr, len);	
-	//HeapSort(arr, len);		
-	//MergeSort(arr, len); 
-	//MergeSortIteration(arr, len);
-	//double类型不可以
+//	double arr[] = {4.5, 2.3,6.7, 3.5, 1.1};
+//	const int len = sizeof(arr) / sizeof(arr[0]);
+//	BubbleSort(arr, len);
+//	BubbleSort1(arr, len);
+//	BubbleSort2(arr, len);
+//	BubbleSort3(arr, len);
+//	InsertSort(arr, len);
+//	ShellSort(arr, len);	
+//	QuickSort(arr, len);
+//	QuickSortIteration(arr, len);
+//	SelectSort(arr, len);	
+//	HeapSort(arr, len);		
+//	MergeSort(arr, len); 
+	MergeSortIteration(arr, len);
+
 	for(auto v : arr){
 		cout << v << " ";
 	} cout << endl;
