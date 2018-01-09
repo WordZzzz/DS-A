@@ -544,7 +544,7 @@ void HeapSort(T *array, const int length) {
 }
 
 /*
- * 归并排序递归版
+ * 归并排序递归版合并函数
  */ 
 
 template <typename T>
@@ -562,15 +562,37 @@ void Merge(T *array, T *reg, int left, int mid, int right) {
 		array[k] = reg[k];
 }
 
+/*
+* 归并排序递归版递归函数
+*/
+
 template <typename T> 
 void MergeSortRecursive(T *array, T *reg, int left, int right) {
 	if (left >= right)
 		return;
 	int mid = left + ((right - left) >> 1);
-	MergeSortRecursive(array, reg, left, mid);		//左序列排序
-	MergeSortRecursive(array, reg, mid + 1, right);	//右序列排序
-	Merge(array, reg, left, mid, right);			//合并左右序列
+	MergeSortRecursive(array, reg, left, mid);			//左序列排序
+	MergeSortRecursive(array, reg, mid + 1, right);		//右序列排序
+	Merge(array, reg, left, mid, right);				//合并左右序列
 } 
+
+/*
+* 归并排序递归版递归函数优化
+*/
+
+template <typename T>
+void MergeSortRecursive1(T *array, T *reg, int left, int right) {
+	if (left >= right)
+		return;
+	if (right - left <= M)								//序列长度小于阈值就采用插入排序
+		InsertSort(array, left, right);
+	else{
+		int mid = left + ((right - left) >> 1);
+		MergeSortRecursive1(array, reg, left, mid);		//左序列排序
+		MergeSortRecursive1(array, reg, mid + 1, right);	//右序列排序
+		Merge(array, reg, left, mid, right);			//合并左右序列
+	}
+}
 
 template <typename T> 
 void MergeSort(T *array, const int length) { 
@@ -585,7 +607,8 @@ void MergeSort(T *array, const int length) {
 		fputs("Error: out of memory\n", stderr);
 		abort();
 	}
-	MergeSortRecursive(array, reg, 0, length - 1);
+//	MergeSortRecursive(array, reg, 0, length - 1);
+	MergeSortRecursive1(array, reg, 0, length - 1);
 	delete[] reg;
 } 
 
@@ -600,7 +623,6 @@ void MergeSortIteration(T *array, const int length) {
 	if (length <= 0)
 		return;
 
-	T* regA = array;
 	T* regB = (T*)malloc(sizeof(T) * length);
 
 	if (regB == NULL)
@@ -608,6 +630,44 @@ void MergeSortIteration(T *array, const int length) {
         fputs("Error: out of memory\n", stderr);
         abort();
     }
+	for (int seg = 1; seg < length; seg += seg) {												//步长，每次翻倍
+		for (int left = 0; left < length; left += seg + seg) {
+			int low = left, mid = min(left + seg, length), high = min(left + seg + seg, length);//因为可能会超出length
+			int k = low;
+			int left1 = low, right1 = mid;
+			int left2 = mid, right2 = high;
+			while (left1 < right1 && left2 < right2)											//这里的表达式没有等号，都是左闭右开区间
+				regB[k++] = array[left1] < array[left2] ? array[left1++] : array[left2++];
+			while (left1 < right1)
+				regB[k++] = array[left1++];
+			while (left2 < right2)
+				regB[k++] = array[left2++];
+		}			
+		for (int i = 0; i < length; i++)														//更新array
+			array[i] = regB[i];
+	}
+	delete[] regB;
+}
+
+/*
+* 归并排序迭代版优化
+*/
+
+template<typename T>
+void MergeSortIteration1(T *array, const int length) {
+	if (array == NULL)
+		throw invalid_argument("Array must not be empty");
+	if (length <= 0)
+		return;
+
+	T* regA = array;
+	T* regB = (T*)malloc(sizeof(T) * length);
+
+	if (regB == NULL)
+	{
+		fputs("Error: out of memory\n", stderr);
+		abort();
+	}
 	for (int seg = 1; seg < length; seg += seg) {												//步长，每次翻倍
 		for (int left = 0; left < length; left += seg + seg) {
 			int low = left, mid = min(left + seg, length), high = min(left + seg + seg, length);//因为可能会超出length
@@ -633,6 +693,62 @@ void MergeSortIteration(T *array, const int length) {
 	delete[] regB;
 }
 
+/*
+ * 获取数组a中最大值
+ */
+template<typename T>
+int get_max(T *array, const int length)
+{
+	int i, max;
+
+	max = array[0];
+	for (i = 1; i < length; i++)
+		if (array[i] > max)
+			max = array[i];
+	return max;
+}
+
+/*
+ * 对数组按照"某个位数"进行排序(桶排序)
+ */
+template<typename T>
+void count_sort(T *array, const int length, int exp)
+{
+	T* output = (T*)malloc(sizeof(T) * length);
+
+	if (output == NULL)
+	{
+		fputs("Error: out of memory\n", stderr);
+		abort();
+	}
+	int i, buckets[10] = { 0 };
+	
+	for (i = 0; i < length; i++)					// 将数据出现的次数存储在buckets[]中
+		buckets[(array[i] / exp) % 10]++;
+
+	for (i = 1; i < 10; i++)						// 更改buckets[i]。目的是让更改后的buckets[i]的值，是该数据在output[]中的位置。
+		buckets[i] += buckets[i - 1];
+
+	for (i = length - 1; i >= 0; i--)				// 将数据存储到临时数组output[]中，这里的对应关系一定要捋清楚
+		output[--buckets[(array[i] / exp) % 10]] = array[i];
+
+	for (i = 0; i < length; i++)					// 将排序好的数据赋值给array[]
+		array[i] = output[i];
+}
+
+/*
+ * 基数排序
+ */
+template<typename T>
+void RadixSort(T *array, const int length)
+{
+	int exp;										// 指数。当对数组按各位进行排序时，exp=1；按十位进行排序时，exp=10；...
+	int max = get_max(array, length);				// 数组array中的最大值
+	
+	for (exp = 1; max / exp > 0; exp *= 10)			// 从个位开始，对数组array按"指数"进行排序
+		count_sort(array, length, exp);
+}
+
 int main() { 
 	int arr[] = {2,4,6,8,9,7,5,3,1};
 	int len = sizeof(arr) / sizeof(*arr);
@@ -649,8 +765,9 @@ int main() {
 //	SelectSort(arr, len);	
 //	HeapSort(arr, len);		
 //	MergeSort(arr, len); 
-	MergeSortIteration(arr, len);
-
+//	MergeSortIteration(arr, len);
+//	MergeSortIteration1(arr, len);
+	RadixSort(arr, len);
 	for(auto v : arr){
 		cout << v << " ";
 	} cout << endl;
